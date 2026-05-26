@@ -245,10 +245,12 @@ API base for frontend: `https://cometbot-api.onrender.com/api`
 ### 6a. Import project
 
 1. Vercel → **Add New** → **Project** → import GitHub repo.
-2. **Root Directory:** `frontend`
+2. **Root Directory:** `frontend` (required)
 3. **Framework Preset:** Vite
-4. **Build Command:** `npm run build`
+4. **Build Command:** leave **empty** (use `frontend/vercel.json`) or set exactly `npm ci && npm run build`
 5. **Output Directory:** `dist`
+
+Do **not** use `cd frontend && ...` in the Vercel UI — that only works when Root Directory is the repo root. With Root Directory = `frontend`, the shell is already inside `frontend/`.
 
 ### 6b. Environment variables (Vercel)
 
@@ -340,6 +342,7 @@ For a **portfolio**, this is usually sufficient. For **production** or **real st
 |---------|-----|
 | CORS error in browser | Add exact Vercel origin to `CORS_ALLOW_ORIGINS` on Render |
 | Blank page on `/chat` refresh | Confirm `frontend/vercel.json` rewrites |
+| Build fails: `cd: frontend: No such file` | Root Directory must be `frontend`; clear Build Command override (`cd frontend && ...`) |
 | Always demo fallback text | Check `GROQ_API_KEY`, quota, model name |
 | No certificate matches | Run `build_pinecone_index.py` with Ollama + Pinecone |
 | Wrong prereqs | Run `build_neo4j_graph.py`; check Aura credentials |
