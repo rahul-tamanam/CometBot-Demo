@@ -94,9 +94,6 @@ function cloneSemesters(s: ProfileSemester[]): ProfileSemester[] {
 }
 
 const TRANSCRIPT_API = (import.meta.env.VITE_TRANSCRIPTPARSER_API ?? '').trim()
-/** Default: client pdf.js parser (matches local dev). Set true only to force Render/pdfplumber. */
-const PREFER_SERVER_TRANSCRIPT =
-  (import.meta.env.VITE_TRANSCRIPTPARSER_PREFER_SERVER ?? '').trim() === 'true'
 
 /** Quadratic bezier ~ M 8vw 85vh Q 25vw 20vh 58vw 32vh at ~1280×800 reference */
 const COMET_PATH_D = 'M 120 680 Q 380 160 870 290'
@@ -345,73 +342,50 @@ export default function OnboardingPage() {
 
   const handleFilePick = () => fileInputRef.current?.click()
 
-  const applyTranscriptResult = useCallback(
-    (result: ParseTranscriptResult) => {
-      setParsed(result)
-      startProgramRows(result)
-      if (studentType === 'current') {
-        const master = result.programs.find(
-          (p) => p.type === 'Master' || p.type === 'Program',
-        )
-        const primary = master ?? result.programs[0]
-        if (primary?.name) {
-          saveProfile((prev) => ({
-            ...prev,
-            program_name: primary.name,
-            semesters: prev.semesters,
-          }))
-        }
-      }
-    },
-    [saveProfile, startProgramRows, studentType],
-  )
-
   const handleUploadSubmit = async () => {
     if (!selectedFile) return
     setParsing(true)
     try {
-      const buf = await selectedFile.arrayBuffer()
-
-      // Same parser as local dev when VITE_TRANSCRIPTPARSER_API is unset.
-      const clientResult = await parseTranscript(buf)
-
-      if (PREFER_SERVER_TRANSCRIPT && TRANSCRIPT_API) {
-        try {
-          const response = (await uploadFile('user-123', null)) as {
-            message?: string
-            transcript_data?: TranscriptApiData
+      if (TRANSCRIPT_API) {
+        const response = (await uploadFile('user-123', null)) as {
+          message?: string
+          transcript_data?: TranscriptApiData
+        }
+        if (response?.message !== 'Transcript processed successfully' || !response.transcript_data) {
+          throw new Error('Transcript parser returned an unexpected response.')
+        }
+        const td = response.transcript_data
+        setParsed(mapTranscriptApiToParseResult(td))
+        startProgramRows(td)
+        if (studentType === 'current') {
+          const primaryMajor = td.majors?.[0]
+          if (primaryMajor?.name) {
+            saveProfile((prev) => ({
+              ...prev,
+              program_name: primaryMajor.name,
+              semesters: prev.semesters,
+            }))
           }
-          if (
-            response?.message === 'Transcript processed successfully' &&
-            response.transcript_data
-          ) {
-            const apiResult = mapTranscriptApiToParseResult(response.transcript_data)
-            const hasApiCourses = apiResult.semesters.some((s) => s.courses.length > 0)
-            const hasClientCourses = clientResult.semesters.some((s) => s.courses.length > 0)
-            if (hasApiCourses && apiResult.semesters.length >= clientResult.semesters.length) {
-              setParsed(apiResult)
-              startProgramRows(response.transcript_data)
-              const primaryMajor = response.transcript_data.majors?.[0]
-              if (studentType === 'current' && primaryMajor?.name) {
-                saveProfile((prev) => ({
-                  ...prev,
-                  program_name: primaryMajor.name,
-                  semesters: prev.semesters,
-                }))
-              }
-              setStep('confirm-programs')
-              return
-            }
-            if (!hasClientCourses && !hasApiCourses) {
-              throw new Error('No courses detected on transcript.')
-            }
+        }
+      } else {
+        const buf = await selectedFile.arrayBuffer()
+        const result = await parseTranscript(buf)
+        setParsed(result)
+        startProgramRows(result)
+        if (studentType === 'current') {
+          const master = result.programs.find(
+            (p) => p.type === 'Master' || p.type === 'Program',
+          )
+          const primary = master ?? result.programs[0]
+          if (primary?.name) {
+            saveProfile((prev) => ({
+              ...prev,
+              program_name: primary.name,
+              semesters: prev.semesters,
+            }))
           }
-        } catch (err) {
-          console.warn('Server transcript parse unavailable, using client parser.', err)
         }
       }
-
-      applyTranscriptResult(clientResult)
       setStep('confirm-programs')
     } catch {
       alert(transcriptNetworkFallback)

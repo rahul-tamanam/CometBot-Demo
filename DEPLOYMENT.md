@@ -92,10 +92,8 @@ copy .env.example .env
 
 ```env
 VITE_API_BASE=http://127.0.0.1:8000/api
-# Transcript upload uses client-side pdf.js by default (recommended on Vercel).
-# Only set these if you explicitly want Render/pdfplumber first:
+# Optional transcript upload (omit on Vercel to use client-side pdf.js):
 # VITE_TRANSCRIPTPARSER_API=http://127.0.0.1:8000/api/parse-transcript
-# VITE_TRANSCRIPTPARSER_PREFER_SERVER=true
 ```
 
 After backend deploy, change both URLs to your Render API base.
@@ -276,8 +274,7 @@ Uses `frontend/vercel.json`.
 | Name | Value |
 |------|--------|
 | `VITE_API_BASE` | `https://YOUR-RENDER-HOST.onrender.com/api` |
-| `VITE_TRANSCRIPTPARSER_API` | Optional — only if `VITE_TRANSCRIPTPARSER_PREFER_SERVER=true` |
-| `VITE_TRANSCRIPTPARSER_PREFER_SERVER` | `true` to try Render pdfplumber before client parser (usually leave unset) |
+| `VITE_TRANSCRIPTPARSER_API` | Optional — server PDF parse; omit to use client-side parser in the browser |
 
 Redeploy after changing env vars.
 

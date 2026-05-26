@@ -3,13 +3,8 @@
 interface ImportMetaEnv {
   /** Backend API base URL (e.g. http://localhost:8000/api). */
   readonly VITE_API_BASE?: string
-  /**
-   * Optional FastAPI transcript URL. Onboarding uses client-side pdf.js by default
-   * (same as local dev without this set). Set VITE_TRANSCRIPTPARSER_PREFER_SERVER=true
-   * to try this endpoint first on upload.
-   */
+  /** Optional FastAPI transcript POST URL (e.g. http://127.0.0.1:8000/api/parse-transcript). */
   readonly VITE_TRANSCRIPTPARSER_API?: string
-  readonly VITE_TRANSCRIPTPARSER_PREFER_SERVER?: string
 }
 
 declare module '*?url' {
