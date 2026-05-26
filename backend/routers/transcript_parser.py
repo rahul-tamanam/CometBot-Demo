@@ -21,6 +21,7 @@ GPA_RE = re.compile(r"^Cum GPA\s+([\d.]+)", re.IGNORECASE)
 CUM_TOTALS_RE = re.compile(r"^Cum Totals\s+([\d.]+)", re.IGNORECASE)
 CIP_RE = re.compile(r"CIP:\s*[\d.]+", re.IGNORECASE)
 DATE_PREFIX_RE = re.compile(r"^\d{4}-\d{2}-\d{2}:\s*")
+EXTERNAL_DEGREES_RE = re.compile(r"External Degree(s)?", re.IGNORECASE)
 SKIP_RE = re.compile(
     r"^(Instructor:|Term GPA|Transfer Term|Combined GPA|"
     r"Transfer Cum|Combined Cum|Academic Standing|Beginning of|"
@@ -76,7 +77,7 @@ def parse_programs(lines: list[str]) -> tuple[list, list, list]:
             in_external_degrees = False
             continue
 
-        if "External Degrees" in line:
+        if EXTERNAL_DEGREES_RE.search(line):
             in_external_degrees = True
             in_program_history = False
             continue
@@ -117,12 +118,25 @@ def parse_programs(lines: list[str]) -> tuple[list, list, list]:
         if CIP_RE.search(line) and current_type:
             name_raw = DATE_PREFIX_RE.sub("", line)
             name_raw = CIP_RE.sub("", name_raw)
+            # Some transcript exports repeat "Program: X" on the same line as CIP.
+            name_raw = re.sub(r"^\s*Program:\s*", "", name_raw, flags=re.IGNORECASE).strip()
             name_raw = re.sub(
                 r"\s+Major\s*$",
                 "",
                 name_raw,
                 flags=re.IGNORECASE,
             ).strip()
+            # Avoid misclassifying external-degree/equivalency rows as active programs.
+            lowered = name_raw.lower()
+            if any(tok in lowered for tok in ("equiv", "equival", "us bach", "bachelor", "associate", "high school")):
+                current_type = None
+                current_start_date = None
+                continue
+            # Drop overly-generic entries that provide no useful program name.
+            if lowered in ("master", "masters", "graduate", "undergraduate"):
+                current_type = None
+                current_start_date = None
+                continue
 
             if not name_raw:
                 current_type = None
@@ -196,8 +210,8 @@ def parse_courses(lines: list[str]) -> tuple[dict, list, list, float, int]:
             continue
 
         sem_match = re.match(
-            r"^(\d{4})\s+(Fall|Spring|Summer|Winter)$|"
-            r"^(Fall|Spring|Summer|Winter)\s+(\d{4})$",
+            r"^(?:Term:\s*)?(\d{4})\s+(Fall|Spring|Summer|Winter)\s*:?\s*$|"
+            r"^(?:Term:\s*)?(Fall|Spring|Summer|Winter)\s+(\d{4})\s*:?\s*$",
             line,
             re.IGNORECASE,
         )
