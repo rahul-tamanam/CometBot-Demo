@@ -24,7 +24,7 @@ from pydantic import BaseModel
 from backend.services.course_loader import load_courses_for_program
 from backend.services.gap_engine import compute_gap
 from backend.services.jd_parser import extract_skills_from_jd
-from backend.services.llm_client import chat
+from backend.services.llm_client import chat, safe_chat
 from backend.services.pinecone_client import query_courses_for_skills
 from backend.services.resume_parser import parse_resume
 from backend.services.skill_normalizer import normalize_skill_list
@@ -487,7 +487,8 @@ async def analyze_from_resume(
         flat_courses=flat_courses,
     )
 
-    llm_result = chat(
+    llm_result = safe_chat(
+        "skills_gap",
         system_prompt=_NARRATIVE_SYSTEM,
         messages=[{"role": "user", "content": narrative_context}],
     )
@@ -564,7 +565,7 @@ Recommended courses: {rec_names or 'None'}
 """
 
     messages = list(request.conversation_history) + [{"role": "user", "content": request.message}]
-    result = chat(system_prompt=system, messages=messages)
+    result = safe_chat("skills_gap_followup", system_prompt=system, messages=messages)
     return {
         "response": result["text"],
         "corrections": result.get("corrections", []),

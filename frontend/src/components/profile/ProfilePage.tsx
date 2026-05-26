@@ -583,7 +583,7 @@ export function ProfilePage({
                           return {
                             ok: false,
                             message:
-                              'Could not load courses. Start the backend (port 8000) and try again.',
+                              'Course catalog is temporarily unavailable. You can still enter a valid course ID manually.',
                           }
                         }
                         if (!catalog.ids.has(cid)) {

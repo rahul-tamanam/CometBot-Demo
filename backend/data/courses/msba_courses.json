@@ -299,7 +299,7 @@
     "credits": 3,
     "course_type": "Elective",
     "description": "This is an advanced course focusing on natural language processing and the utility of textual data to gain\r\nmeaningful quantitative and actionable insights about the language (mainly English) using rule-based and\r\nstatistical methods and to extract the information for real-world applications. This class will focus both on\r\nmodern neural methods for these problems (including architectures such as RNNs, LSTMs,\r\nTransformers) and on classical methods (logistic/linear regression).",
-    "prerequisites": [],
+    "prerequisites": ["BUAN 6341"],
     "only_one_of_these": [],
     "skills_taught": [
       "natural language processing",

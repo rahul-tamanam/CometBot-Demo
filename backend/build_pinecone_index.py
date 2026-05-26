@@ -4,7 +4,7 @@ import sys
 
 sys.path.append(os.path.dirname(__file__))
 
-from services.pinecone_client import upsert_courses, upsert_skills
+from services.pinecone_client import upsert_courses, upsert_skills, upsert_certificates
 from services.course_loader import load_all_courses
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -29,7 +29,22 @@ def main():
 
     print(f"\nFound {len(skills)} job roles\n")
     upsert_skills(skills)
-    print("\n[done] Pinecone index ready")
+
+    certs_dir = os.path.join(DATA_DIR, "certificates")
+    all_certs: list[dict] = []
+    if os.path.isdir(certs_dir):
+        for fname in sorted(os.listdir(certs_dir)):
+            if not fname.endswith("_certs.json"):
+                continue
+            with open(os.path.join(certs_dir, fname), encoding="utf-8") as f:
+                all_certs.extend(json.load(f))
+    if all_certs:
+        print(f"\nUploading {len(all_certs)} certificates to Pinecone...\n")
+        upsert_certificates(all_certs)
+    else:
+        print("\n[warn] No certificate JSON files found under data/certificates/")
+
+    print("\n[done] Pinecone index ready (courses, skills, certificates)")
 
 if __name__ == "__main__":
     main()

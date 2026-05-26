@@ -8,14 +8,15 @@ import useFileUpload from '@/hooks/useFileUpload'
 import { useProfile, type ProfileSemester } from '@/hooks/useProfile'
 import { mapTranscriptApiToParseResult, type TranscriptApiData } from '@/lib/mapTranscriptApi'
 import { parseTranscript, type ParsedProgram, type ParseTranscriptResult } from '@/lib/parseTranscript'
+import { DemoDisclaimer } from '@/components/DemoDisclaimer'
+import { API_BASE } from '@/api'
+import { transcriptNetworkFallback } from '@/lib/demoMessages'
 
 const ONBOARDING_COMPLETE_KEY = 'cometbot_onboarding_complete'
 
 const ONBOARDING_BG = '#FAF7F2'
 
-const API_ROOT =
-  (typeof import.meta.env.VITE_API_BASE === 'string' && import.meta.env.VITE_API_BASE.replace(/\/$/, '')) ||
-  'http://localhost:8000/api'
+const API_ROOT = API_BASE
 
 function normalizeCourseCode(c: string) {
   return (c || '').trim().toUpperCase().replace(/\s+/g, ' ')
@@ -266,7 +267,7 @@ export default function OnboardingPage() {
 
   const goDashboard = useCallback(() => {
     markOnboardingComplete()
-    navigate('/', { replace: true })
+    navigate('/chat', { replace: true })
   }, [navigate])
 
   const startProgramRows = useCallback((data: TranscriptApiData | ParseTranscriptResult) => {
@@ -387,6 +388,7 @@ export default function OnboardingPage() {
       }
       setStep('confirm-programs')
     } catch {
+      alert(transcriptNetworkFallback)
     } finally {
       setParsing(false)
     }
@@ -580,10 +582,13 @@ export default function OnboardingPage() {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.12, duration: 0.45 }}
-                className="mx-auto mb-9 mt-3 max-w-2xl text-pretty text-base leading-[1.6] text-[#777] sm:text-lg"
+                className="mx-auto mb-4 mt-3 max-w-2xl text-pretty text-base leading-[1.6] text-[#777] sm:text-lg"
               >
-                Personalized course recommendations, degree tracking, and career guidance built for UTD students.
+                Personalized course recommendations, degree tracking, and career guidance—portfolio demo.
               </motion.p>
+              <div className="mx-auto mb-9 w-full max-w-xl px-2">
+                <DemoDisclaimer variant="compact" />
+              </div>
               <div className="mx-auto grid w-full max-w-lg grid-cols-1 gap-2 sm:grid-cols-2 sm:items-stretch sm:gap-3">
                 <motion.button
                   type="button"

@@ -20,6 +20,9 @@ import ProgressBar from '@/components/degree/ProgressBar'
 import CourseCardComponent from '@/components/degree/CourseCardComponent'
 import SemesterTimeline from '@/components/degree/SemesterTimeline'
 import SkillsGapAnalyzer from '@/components/SkillsGapAnalyzer'
+import { DemoDisclaimer } from '@/components/DemoDisclaimer'
+import { DemoAcknowledgmentModal, DemoFloatingBadge } from '@/components/DemoAcknowledgmentModal'
+import { degreePlannerNetworkFallback, careerMentorNetworkFallback } from '@/lib/demoMessages'
 
 function uid() {
   return Math.random().toString(16).slice(2) + Date.now().toString(16)
@@ -365,8 +368,7 @@ export function CometDashboard() {
     } catch {
       const botMsg: ChatMessage = {
         role: 'assistant',
-        content:
-          'Something went wrong. Please make sure the backend (port 8000) and LM Studio are running.',
+        content: mode === 'career' ? careerMentorNetworkFallback : degreePlannerNetworkFallback,
         tag: modeToTag(mode),
         ts: Date.now(),
       }
@@ -382,6 +384,8 @@ export function CometDashboard() {
       className="h-screen w-full overflow-hidden text-[color:var(--text)]"
       style={{ backgroundColor: 'var(--bg)' }}
     >
+      <DemoAcknowledgmentModal active />
+      <DemoFloatingBadge />
       {/* Global header (matches reference) */}
       <header
         className="flex h-14 items-center justify-between px-4"
@@ -1147,6 +1151,7 @@ export function CometDashboard() {
           </div>
         </div>
       )}
+      <DemoDisclaimer variant="footer" />
     </div>
   )
 }

@@ -1,8 +1,10 @@
+import logging
 import os
 from typing import Any
 
 from groq import Groq
 
+from backend.services.demo_fallbacks import get_fallback
 from backend.services.validator import (
     validate_and_fix_response,
     soften_length_truncation,
@@ -15,6 +17,7 @@ INJECT_SYSTEM_INTO_USER = False
 FORCE_SYSTEM_IN_USER = os.getenv("LLM_FORCE_SYSTEM_IN_USER", "0") == "1"
 
 _groq_client: Groq | None = None
+_log = logging.getLogger(__name__)
 
 
 def _get_groq() -> Groq:
@@ -127,3 +130,36 @@ def chat(
         "corrections": [],
         "removed": [],
     }
+
+
+def safe_chat(
+    fallback_key: str,
+    system_prompt: str,
+    messages: list[dict],
+    *,
+    temperature: float = 0.3,
+    max_tokens: int = DEFAULT_MAX_TOKENS,
+    validate: bool = True,
+) -> dict[str, Any]:
+    """
+    Like ``chat``, but never raises. On missing key, rate limits, or network errors,
+    returns demo-safe narrative text (no token/backend jargon).
+    """
+    try:
+        out = chat(
+            system_prompt=system_prompt,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            validate=validate,
+        )
+        out["llm_unavailable"] = False
+        return out
+    except Exception as exc:
+        _log.warning("LLM unavailable (%s): %s", fallback_key, exc)
+        return {
+            "text": get_fallback(fallback_key),
+            "corrections": [],
+            "removed": [],
+            "llm_unavailable": True,
+        }

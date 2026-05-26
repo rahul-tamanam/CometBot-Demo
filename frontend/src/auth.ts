@@ -1,38 +1,20 @@
+/** Demo build: no institutional login; session flag kept for optional future use. */
 const AUTH_STORAGE_KEY = 'cometbot_auth'
 
-export const DEMO_USER_ID = 'user123'
-export const DEMO_PASSWORD = 'user@123'
-
 export function isAuthenticated() {
-  try {
-    return sessionStorage.getItem(AUTH_STORAGE_KEY) === 'true'
-  } catch {
-    return false
-  }
+  return true
 }
 
-export function signIn(userId: string, password: string) {
-  const skipPassword =
-    import.meta.env.DEV || import.meta.env.VITE_SKIP_PASSWORD_AUTH === 'true'
+export function useAuth() {
+  return { isAuthenticated: true }
+}
 
-  if (skipPassword) {
-    try {
-      sessionStorage.setItem(AUTH_STORAGE_KEY, 'true')
-    } catch {
-      // ignore storage failures in demo mode
-    }
-    return true
-  }
-
-  const valid = userId === DEMO_USER_ID && password === DEMO_PASSWORD
-  if (!valid) return false
-
+export function signIn(_userId: string, _password: string) {
   try {
     sessionStorage.setItem(AUTH_STORAGE_KEY, 'true')
   } catch {
-    // ignore storage failures in demo mode
+    // ignore
   }
-
   return true
 }
 
@@ -40,6 +22,6 @@ export function signOut() {
   try {
     sessionStorage.removeItem(AUTH_STORAGE_KEY)
   } catch {
-    // ignore storage failures in demo mode
+    // ignore
   }
 }

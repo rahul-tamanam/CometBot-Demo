@@ -4,6 +4,8 @@ import { ChatBubble } from '@/components/dashboard/ChatBubble';
 import { InputBar } from '@/components/dashboard/InputBar';
 import type { ChatMessage as DashboardChatMessage } from '@/components/dashboard/types';
 import Loader from '@/components/ui/loader-5';
+import { API_BASE } from '@/api';
+import { skillsGapNetworkFallback } from '@/lib/demoMessages';
 
 /** Same accent as Degree Planner user bubbles (red→orange gradient) */
 const ACCENT_SKILLS_GAP =
@@ -77,8 +79,6 @@ const JOB_ROLES = [
   'Supply Chain Manager',
   'Systems Analyst',
 ];
-
-const API_BASE = 'http://localhost:8000/api';
 
 function MatchGauge({ percent }: { percent: number }) {
   const [animatedPercent, setAnimatedPercent] = useState(0);
@@ -771,12 +771,8 @@ export default function SkillsGapAnalyzer({ profile }: Props) {
         body: formData,
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || `Request failed (${res.status})`);
-      }
-
-      if (data.error) {
-        setMessages([{ role: 'assistant', content: `Error: ${data.error}` }]);
+      if (!res.ok || data.error) {
+        setMessages([{ role: 'assistant', content: skillsGapNetworkFallback }]);
         setPhase('chat');
         return;
       }
@@ -798,12 +794,11 @@ export default function SkillsGapAnalyzer({ profile }: Props) {
       setConversationHistory(firstHistory);
       setMessages([assistantMessage]);
       setPhase('chat');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
+    } catch {
       setMessages([
         {
           role: 'assistant',
-          content: `Something went wrong running the analysis: ${msg}`,
+          content: skillsGapNetworkFallback,
         },
       ]);
       setPhase('chat');
@@ -838,17 +833,20 @@ export default function SkillsGapAnalyzer({ profile }: Props) {
       const res = await fetch(`${API_BASE}/skills-gap/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error || `Request failed (${res.status})`);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: skillsGapNetworkFallback },
+        ]);
+        return;
       }
 
-      const reply = data.response || 'No response received.';
+      const reply = data.response || skillsGapNetworkFallback;
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
       setConversationHistory([...newHistory, { role: 'assistant', content: reply }]);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
+    } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: `Something went wrong: ${msg}` },
+        { role: 'assistant', content: skillsGapNetworkFallback },
       ]);
     } finally {
       setIsLoading(false);

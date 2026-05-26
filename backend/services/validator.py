@@ -37,8 +37,11 @@ TITLE_TO_ID: dict[str, str] = {
 }
 NORM_TITLES: list[str] = list(TITLE_TO_ID.keys())
 
-# Regex to find course ID patterns in text e.g. BUAN 6341, MIS 6380
-COURSE_ID_PATTERN = re.compile(r'\b([A-Z]{2,5})\s?(\d{4,5})\b')
+# Regex: standard numeric sections (BUAN 6341) and variable-credit style (BUAN 6V98, IMS 6V92).
+COURSE_ID_PATTERN = re.compile(
+    r"\b([A-Z]{2,5})\s?(\d{4,5}|\d[V]\d{2})\b",
+    re.IGNORECASE,
+)
 
 
 def extract_course_ids(text: str) -> list[str]:
@@ -46,8 +49,11 @@ def extract_course_ids(text: str) -> list[str]:
     Extracts all course ID mentions from a text string.
     Normalizes spacing e.g. BUAN6341 -> BUAN 6341
     """
-    matches = COURSE_ID_PATTERN.findall(text)
-    return [f"{prefix} {number}" for prefix, number in matches]
+    matches = COURSE_ID_PATTERN.findall(text or "")
+    out: list[str] = []
+    for prefix, number in matches:
+        out.append(f"{prefix.upper()} {number.upper()}")
+    return out
 
 
 def validate_course_id(course_id: str) -> dict:

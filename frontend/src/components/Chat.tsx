@@ -40,7 +40,8 @@ export default function Chat({ title, color, onSend, header }: Props) {
         ...newHistory,
         {
           role:    'assistant',
-          content: 'Something went wrong. Please make sure the backend and LM Studio are running.'
+          content:
+            'This demo could not complete your request right now. Please check your connection and try again.'
         }
       ])
     } finally {

@@ -83,7 +83,8 @@ export default function SkillsGap() {
     } catch (err) {
       setMessages([{
         role:    'assistant',
-        content: 'Something went wrong. Please make sure the backend is running.'
+        content:
+          'This demo could not complete your request right now. Please check your connection and try again.'
       }])
     } finally {
       setLoading(false)

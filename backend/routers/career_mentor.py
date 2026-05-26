@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 import json
 import os
-from backend.services.llm_client import chat
+from backend.services.llm_client import safe_chat
 from backend.services.pinecone_client import (
     get_embedding,
     sanitize,
@@ -299,9 +299,10 @@ Soft Skills Required: {', '.join(job_role['soft_skills'])}
         {"role": "user", "content": request.message}
     ]
 
-    result = chat(
+    result = safe_chat(
+        "career_mentor",
         system_prompt=system_prompt_with_context,
-        messages=messages
+        messages=messages,
     )
 
     return {

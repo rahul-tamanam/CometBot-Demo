@@ -4,7 +4,7 @@ import re
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from neo4j.exceptions import ServiceUnavailable, AuthError
-from backend.services.llm_client import chat
+from backend.services.llm_client import safe_chat
 from backend.services.pinecone_client import query_courses
 from backend.services.neo4j_client import (
     get_valid_next_courses,
@@ -2093,19 +2093,9 @@ def degree_planner_chat(request: ChatRequest) -> DegreePlannerResponse:
     # ── Path C: conversational advising via LLM ──────────────────────────────
     try:
         eligible_courses = get_valid_next_courses(valid_completed, program_id=program_id)
-    except ServiceUnavailable:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Neo4j is unavailable. Check NEO4J_URI in your .env and "
-                "confirm the database host is reachable."
-            ),
-        )
-    except AuthError:
-        raise HTTPException(
-            status_code=503,
-            detail="Neo4j authentication failed. Check NEO4J_USERNAME and NEO4J_PASSWORD.",
-        )
+    except (ServiceUnavailable, AuthError):
+        # Demo deploy: catalog progress still works without the graph.
+        eligible_courses = []
 
     # Canonical types + eligible next steps from graph (kept for side-effect parity;
     # the LLM prompt uses remaining_* lists, not this eligibility list directly).
@@ -2138,6 +2128,13 @@ STUDENT DEGREE PROGRESS:
 {internship_line}
 {pct_line}
 """.strip()
+    # Per-ID completed lists (aggregates alone hide courses like BUAN 6341 from the model).
+    progress_lists_context = format_progress_block(progress, program_id)
+    profile_audit_context = ""
+    if validation.get("invalid"):
+        audit = _profile_course_audit_for_prompt(valid_completed, validation).strip()
+        if audit:
+            profile_audit_context = audit + "\n\n"
     courses_context = format_course_lists(remaining_core, remaining_elective, list_notes)
     remaining_elective_context = "\n".join(
         f"{c.get('course_id', '')} | {c.get('title', '')} | {c.get('credits', 3)}"
@@ -2158,6 +2155,8 @@ STUDENT DEGREE PROGRESS:
     system_prompt_with_context = (
         f"{system_prompt_base}\n\n"
         f"{progress_context}\n\n"
+        f"{progress_lists_context}\n\n"
+        f"{profile_audit_context}"
         f"{core_requirement_context}\n\n"
         f"{special_requirement_context}\n\n"
         f"REQUEST TYPE: {requested_type or 'Any'}\n"
@@ -2177,7 +2176,8 @@ STUDENT DEGREE PROGRESS:
         {"role": "user", "content": request.message}
     ]
 
-    result = chat(
+    result = safe_chat(
+        "degree_planner",
         system_prompt=system_prompt_with_context,
         messages=messages,
     )

@@ -45,6 +45,12 @@ JSOMAdvisor/
 └── README.md
 ```
 
+## Portfolio demo deployment
+
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** for the full step-by-step deploy (Groq, Neo4j, Pinecone, Render, Vercel). Legal notice: **[LEGAL_DEMO_NOTICE.md](LEGAL_DEMO_NOTICE.md)**. Chat shows an acknowledgment modal on first visit each session.
+
+**Visitor flow:** onboarding (current / prospective student) → program & courses → CometBot dashboard. No marketing landing page or UTD login.
+
 ## Quick setup
 
 ### 1. Backend (port 8000)
@@ -81,7 +87,7 @@ Copy `frontend/.env.example` to `frontend/.env` and set `VITE_TRANSCRIPTPARSER_A
 npm run dev
 ```
 
-- App with React Router: use **`http://localhost:5173/app/onboarding`** or **`http://localhost:5173/app`** as routed (basename `/app`).
+- App: **`http://localhost:5173/`** (onboarding landing), then **`/chat`** after setup.
 - Production build: `npm run build` → output under `frontend/dist/`.
 
 ### 3. Environment variables
@@ -93,8 +99,8 @@ npm run dev
 | `GROQ_API_KEY` | Root `.env` | LLM (required for chat features) |
 | `GROQ_MODEL`, `LLM_MAX_TOKENS`, `LLM_FORCE_SYSTEM_IN_USER` | Root `.env` | Optional LLM tuning |
 | `CORS_ALLOW_ORIGINS` | Root `.env` | Optional comma-separated origins |
-| `VITE_TRANSCRIPTPARSER_API` | `frontend/.env` | POST URL for PDF transcript parsing |
-| `VITE_SKIP_PASSWORD_AUTH` | `frontend/.env` | Optional dev flag (see `frontend/src/auth.ts`) |
+| `VITE_API_BASE` | `frontend/.env` | Backend API base, e.g. `http://127.0.0.1:8000/api` |
+| `VITE_TRANSCRIPTPARSER_API` | `frontend/.env` | POST URL for PDF transcript parsing (optional) |
 
 Details and placeholders: **`.env.example`** and **`frontend/.env.example`**.
 
@@ -126,7 +132,7 @@ The build script upserts courses, skills, and certificates into namespaces (e.g.
 1. **`.env`** at repo root with Neo4j, Pinecone, and **`GROQ_API_KEY`**.
 2. **`frontend/.env`** with **`VITE_TRANSCRIPTPARSER_API`** if demoing transcript upload.
 3. Start **backend** on 8000, then **frontend** on 5173.
-4. Open the app at **`/app/`** routes (e.g. `/app/onboarding`).
+4. Open **`http://localhost:5173/`** (onboarding first visit).
 5. If degree chat errors on Neo4j, confirm Aura credentials and that the graph matches expected course nodes.
 
 ## Common issues
@@ -135,7 +141,7 @@ The build script upserts courses, skills, and certificates into namespaces (e.g.
 - **Pinecone:** verify `PINECONE_*`; re-run `build_pinecone_index.py` if the index is empty.
 - **LLM errors:** confirm **`GROQ_API_KEY`** and `pip install -r requirements.txt` (includes `groq`).
 - **CORS / private network:** backend enables `allow_private_network` for browser preflight to localhost APIs.
-- **404 on `/app/...`:** use the Vite dev server and the `/app/` basename; see `frontend/vite.config.ts` SPA fallback.
+- **404 on refresh in production:** configure SPA rewrites (`vercel.json` in repo).
 
 ## Career Mentor (certificate flow)
 

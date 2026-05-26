@@ -35,9 +35,12 @@ app.add_middleware(
 
 @app.get("/api/health")
 def health_check():
+    groq_configured = bool(os.getenv("GROQ_API_KEY", "").strip())
     return {
-        "status":  "ok",
-        "message": "MSBA Smart Advisor API is running"
+        "status": "ok",
+        "message": "CometBot API is running (portfolio demo)",
+        "demo_mode": True,
+        "llm_configured": groq_configured,
     }
 
 

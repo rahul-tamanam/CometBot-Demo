@@ -1,24 +1,34 @@
 import { CometDashboard } from '@/components/dashboard/CometDashboard'
-import { LoginPage } from '@/components/auth/LoginPage'
 import OnboardingPage from '@/pages/OnboardingPage'
-import { isAuthenticated } from './auth'
 import { useProfile } from '@/hooks/useProfile'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
-import type { ReactElement } from 'react'
 
 const ONBOARDING_COMPLETE_KEY = 'cometbot_onboarding_complete'
 
-function AuthenticatedShell() {
+export function isOnboardingComplete() {
+  try {
+    return localStorage.getItem(ONBOARDING_COMPLETE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+/** Step 1–N: current/prospective landing → program → transcript → confirm courses */
+function OnboardingRoute() {
+  if (isOnboardingComplete()) {
+    return <Navigate to="/chat" replace />
+  }
+  return <OnboardingPage />
+}
+
+/** Step final: CometBot dashboard (degree / career / skills gap) */
+function ChatRoute() {
   const { profile, completedCourses } = useProfile()
   const [visible, setVisible] = useState(false)
 
-  const needsOnboarding = useMemo(() => {
-    try {
-      if (localStorage.getItem(ONBOARDING_COMPLETE_KEY) === 'true') return false
-    } catch {
-      return false
-    }
+  const mustFinishOnboarding = useMemo(() => {
+    if (isOnboardingComplete()) return false
     return completedCourses.length === 0 && profile.semesters.length === 0
   }, [completedCourses.length, profile.semesters.length])
 
@@ -27,8 +37,8 @@ function AuthenticatedShell() {
     return () => window.cancelAnimationFrame(id)
   }, [])
 
-  if (needsOnboarding) {
-    return <Navigate to="/onboarding" replace />
+  if (mustFinishOnboarding) {
+    return <Navigate to="/" replace />
   }
 
   return (
@@ -44,27 +54,14 @@ function AuthenticatedShell() {
   )
 }
 
-function RequireAuth({ children }: { children: ReactElement }) {
-  const location = useLocation()
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace state={{ from: location }} />
-  }
-  return children
-}
-
 export default function App() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/onboarding" element={<OnboardingPage />} />
-      <Route
-        path="/"
-        element={
-          <RequireAuth>
-            <AuthenticatedShell />
-          </RequireAuth>
-        }
-      />
+      {/* Landing: Meet CometBot + current / prospective */}
+      <Route path="/" element={<OnboardingRoute />} />
+      <Route path="/onboarding" element={<OnboardingRoute />} />
+      {/* Chatbot after onboarding */}
+      <Route path="/chat" element={<ChatRoute />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

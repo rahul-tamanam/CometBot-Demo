@@ -1,6 +1,16 @@
 import axios from 'axios'
+import {
+  careerMentorNetworkFallback,
+  degreePlannerNetworkFallback,
+  skillsGapNetworkFallback,
+} from '@/lib/demoMessages'
 
-const BASE = 'http://localhost:8000/api'
+export const API_BASE =
+  (typeof import.meta.env.VITE_API_BASE === 'string' &&
+    import.meta.env.VITE_API_BASE.replace(/\/$/, '')) ||
+  'http://localhost:8000/api'
+
+const BASE = API_BASE
 
 export interface Message {
   role:    'user' | 'assistant'
@@ -61,11 +71,41 @@ export interface DegreePlannerResponse {
   corrections:         any[]
 }
 
+const emptyProgress = (): ProgressData => ({
+  core_completed_credits: 0,
+  core_remaining_credits: 0,
+  core_completed_count: 0,
+  core_remaining_count: 0,
+  elective_completed_credits: 0,
+  elective_remaining_credits: 0,
+  elective_completed_count: 0,
+  elective_remaining_count: 0,
+  total_completed_credits: 0,
+  total_remaining_credits: 0,
+  total_completed_count: 0,
+  total_remaining_count: 0,
+  percent_complete: 0,
+})
+
 export const degreePlannerChat = async (
   data: DegreePlannerRequest
 ): Promise<DegreePlannerResponse> => {
-  const res = await axios.post(`${BASE}/degree-planner/chat`, data)
-  return res.data
+  try {
+    const res = await axios.post(`${BASE}/degree-planner/chat`, data)
+    return res.data
+  } catch {
+    return {
+      narrative: degreePlannerNetworkFallback,
+      progress: emptyProgress(),
+      recommended_courses: [],
+      semester_plan: [],
+      remaining_core: [],
+      remaining_elective: [],
+      choice_group_notes: [],
+      invalid_courses: [],
+      corrections: [],
+    }
+  }
 }
 
 export interface DegreePlannerPlanRequest {
@@ -163,8 +203,18 @@ export interface CareerMentorResponse {
 export const careerMentorChat = async (
   data: CareerMentorRequest
 ): Promise<CareerMentorResponse> => {
-  const res = await axios.post(`${BASE}/career-mentor/chat`, data)
-  return res.data
+  try {
+    const res = await axios.post(`${BASE}/career-mentor/chat`, data)
+    return res.data
+  } catch {
+    return {
+      response: careerMentorNetworkFallback,
+      corrections: [],
+      removed: [],
+      job_role: null,
+      matched_certificates: [],
+    }
+  }
 }
 
 // ── Skills Gap ────────────────────────────────────────────────────────────────
@@ -200,8 +250,22 @@ export interface SkillsGapResponse {
 export const skillsGapAnalyze = async (
   data: SkillsGapRequest
 ): Promise<SkillsGapResponse> => {
-  const res = await axios.post(`${BASE}/skills-gap/analyze`, data)
-  return res.data
+  try {
+    const res = await axios.post(`${BASE}/skills-gap/analyze`, data)
+    return res.data
+  } catch {
+    return {
+      response: skillsGapNetworkFallback,
+      corrections: [],
+      removed: [],
+      job_role: null,
+      confidence_warning: null,
+      gap: { matched: [], missing_technical: [], missing_soft: [] },
+      recommendations: {},
+      student_skills: [],
+      invalid_courses: [],
+    }
+  }
 }
 // ── Skills Gap — resume upload ────────────────────────────────────────────────
 
@@ -218,6 +282,20 @@ export const skillsGapAnalyzeResume = async (
   form.append('program_id',      programId)
 
   // Let axios set multipart boundary automatically — a manual Content-Type breaks uploads.
-  const res = await axios.post(`${BASE}/skills-gap/analyze-resume`, form)
-  return res.data
+  try {
+    const res = await axios.post(`${BASE}/skills-gap/analyze-resume`, form)
+    return res.data
+  } catch {
+    return {
+      response: skillsGapNetworkFallback,
+      corrections: [],
+      removed: [],
+      job_role: null,
+      confidence_warning: null,
+      gap: { matched: [], missing_technical: [], missing_soft: [] },
+      recommendations: {},
+      student_skills: [],
+      invalid_courses: [],
+    }
+  }
 }
