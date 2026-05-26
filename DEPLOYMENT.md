@@ -92,7 +92,10 @@ copy .env.example .env
 
 ```env
 VITE_API_BASE=http://127.0.0.1:8000/api
-VITE_TRANSCRIPTPARSER_API=http://127.0.0.1:8000/api/parse-transcript
+# Transcript upload uses client-side pdf.js by default (recommended on Vercel).
+# Only set these if you explicitly want Render/pdfplumber first:
+# VITE_TRANSCRIPTPARSER_API=http://127.0.0.1:8000/api/parse-transcript
+# VITE_TRANSCRIPTPARSER_PREFER_SERVER=true
 ```
 
 After backend deploy, change both URLs to your Render API base.
@@ -252,7 +255,8 @@ API base for frontend: `https://cometbot-api.onrender.com/api`
 | Name | Value |
 |------|--------|
 | `VITE_API_BASE` | `https://YOUR-RENDER-HOST.onrender.com/api` |
-| `VITE_TRANSCRIPTPARSER_API` | `https://YOUR-RENDER-HOST.onrender.com/api/parse-transcript` |
+| `VITE_TRANSCRIPTPARSER_API` | Optional — only if `VITE_TRANSCRIPTPARSER_PREFER_SERVER=true` |
+| `VITE_TRANSCRIPTPARSER_PREFER_SERVER` | `true` to try Render pdfplumber before client parser (usually leave unset) |
 
 Redeploy after changing env vars.
 
