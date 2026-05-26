@@ -1,4 +1,5 @@
 import os
+import re
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -23,6 +24,13 @@ _cors_origins = (
     [o.strip() for o in _cors_env.split(",") if o.strip()] if _cors_env else list(_default_cors)
 )
 
+_cors_origin_regex = os.getenv("CORS_ALLOW_ORIGIN_REGEX", "").strip()
+# Convenience: allow configuring "*.vercel.app" via CORS_ALLOW_ORIGINS.
+# Example: CORS_ALLOW_ORIGINS=https://cometbot-demo.vercel.app,https://*.vercel.app
+if not _cors_origin_regex and any("*.vercel.app" in o for o in _cors_origins):
+    _cors_origins = [o for o in _cors_origins if "*.vercel.app" not in o]
+    _cors_origin_regex = r"^https://.*\.vercel\.app$"
+
 import inspect
 
 _cors_kwargs = {
@@ -30,6 +38,13 @@ _cors_kwargs = {
     "allow_methods": ["*"],
     "allow_headers": ["*"],
 }
+if _cors_origin_regex:
+    # Starlette expects a regex string; validate it's compilable.
+    try:
+        re.compile(_cors_origin_regex)
+        _cors_kwargs["allow_origin_regex"] = _cors_origin_regex
+    except re.error:
+        pass
 
 # Chrome “Private Network Access” (Access-Control-Request-Private-Network) support.
 # Starlette may not support this kwarg in older versions; avoid passing it unless supported.
