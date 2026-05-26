@@ -388,7 +388,17 @@ export default function OnboardingPage() {
       }
       setStep('confirm-programs')
     } catch {
-      alert(transcriptNetworkFallback)
+      // Demo deploys can fail transcript upload due to cold starts or CORS.
+      // Fall back to client-side PDF parsing so the user can continue onboarding.
+      try {
+        const buf = await selectedFile.arrayBuffer()
+        const result = await parseTranscript(buf)
+        setParsed(result)
+        startProgramRows(result)
+        setStep('confirm-programs')
+      } catch {
+        alert(transcriptNetworkFallback)
+      }
     } finally {
       setParsing(false)
     }
