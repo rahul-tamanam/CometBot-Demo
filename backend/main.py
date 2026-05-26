@@ -23,16 +23,25 @@ _cors_origins = (
     [o.strip() for o in _cors_env.split(",") if o.strip()] if _cors_env else list(_default_cors)
 )
 
+import inspect
+
 _cors_kwargs = {
     "allow_origins": _cors_origins,
     "allow_methods": ["*"],
     "allow_headers": ["*"],
 }
-# Chrome “Private Network Access” preflight support (only if Starlette version supports it).
+
+# Chrome “Private Network Access” (Access-Control-Request-Private-Network) support.
+# Starlette may not support this kwarg in older versions; avoid passing it unless supported.
 try:
-    app.add_middleware(CORSMiddleware, **_cors_kwargs, allow_private_network=True)
-except TypeError:
-    app.add_middleware(CORSMiddleware, **_cors_kwargs)
+    sig = inspect.signature(CORSMiddleware.__init__)
+    if "allow_private_network" in sig.parameters:
+        _cors_kwargs["allow_private_network"] = True
+except Exception:
+    # If signature introspection fails for any reason, omit the kwarg.
+    pass
+
+app.add_middleware(CORSMiddleware, **_cors_kwargs)
 
 @app.get("/api/health")
 def health_check():
