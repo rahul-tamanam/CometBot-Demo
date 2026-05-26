@@ -23,15 +23,16 @@ _cors_origins = (
     [o.strip() for o in _cors_env.split(",") if o.strip()] if _cors_env else list(_default_cors)
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_cors_origins,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    # Chrome "Private Network Access": e.g. Origin http://localhost:5173 → API http://127.0.0.1:8000
-    # sends Access-Control-Request-Private-Network; without this, OPTIONS returns 400 and chat never runs.
-    allow_private_network=True,
-)
+_cors_kwargs = {
+    "allow_origins": _cors_origins,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
+# Chrome “Private Network Access” preflight support (only if Starlette version supports it).
+try:
+    app.add_middleware(CORSMiddleware, **_cors_kwargs, allow_private_network=True)
+except TypeError:
+    app.add_middleware(CORSMiddleware, **_cors_kwargs)
 
 @app.get("/api/health")
 def health_check():
