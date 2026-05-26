@@ -78,7 +78,7 @@ GROQ_MODEL=llama-3.3-70b-versatile
 LLM_MAX_TOKENS=1024
 
 # Add your Vercel URL after Step 6 (comma-separated, no trailing slash)
-CORS_ALLOW_ORIGINS=http://localhost:5173,https://your-app.vercel.app
+CORS_ALLOW_ORIGINS=http://localhost:5173,https://*.vercel.app
 ```
 
 Never commit `.env`.
@@ -287,7 +287,7 @@ Redeploy after changing env vars.
 Add your final Vercel URL to Render `CORS_ALLOW_ORIGINS`, e.g.:
 
 ```env
-CORS_ALLOW_ORIGINS=https://cometbot-demo.vercel.app,http://localhost:5173
+CORS_ALLOW_ORIGINS=http://localhost:5173,https://*.vercel.app
 ```
 
 Redeploy backend if you change CORS.
@@ -356,7 +356,7 @@ For a **portfolio**, this is usually sufficient. For **production** or **real st
 
 | Symptom | Fix |
 |---------|-----|
-| CORS error in browser | Add exact Vercel origin to `CORS_ALLOW_ORIGINS` on Render |
+| CORS error in browser | On Render, set `CORS_ALLOW_ORIGINS` to include your exact Vercel URL or `https://*.vercel.app` (allows any `*.vercel.app` preview/production URL) |
 | Blank page on `/chat` refresh | Confirm `frontend/vercel.json` rewrites |
 | Build fails: `cd: frontend: No such file` | Root Directory is `frontend` but Build Command still has `cd frontend` — clear override |
 | **404: NOT_FOUND** on site URL | Wrong Output Directory (`frontend/dist` while Root Directory is `frontend` → use `dist` only). Or Root Directory empty with no root `vercel.json` — use **Option A** |
